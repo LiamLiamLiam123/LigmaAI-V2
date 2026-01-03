@@ -1,0 +1,2 @@
+# LigmaAI-V2
+UPGRADE

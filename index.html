@@ -30,16 +30,25 @@ header { padding: 15px; text-align: center; font-size: 22px; background: #0f2f0f
 </div>
 
 <script>
-/* === Hugging Face Token === */
-const HF_TOKEN = "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"; // replace with your Hugging Face token
+/* ================================
+   🔑 PUT YOUR HF TOKEN HERE
+   ================================ */
+const HF_TOKEN = "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";
 
-/* === SYSTEM PROMPT === */
+/* ================================
+   SYSTEM PROMPT
+   ================================ */
 const SYSTEM_PROMPT =
 "You are LigmaAI, a friendly and helpful assistant made by Liam Stephenson. " +
-"Always answer clearly and politely. NEVER mention Google; use 'Ligma' instead.";
+"You must NEVER mention Google. If needed, say 'Ligma' or 'Ligma Browser'. " +
+"Always answer politely and clearly.";
 
-/* === Chat memory === */
-let conversation = [{ role: "user", content: SYSTEM_PROMPT }];
+/* ================================
+   CHAT MEMORY
+   ================================ */
+let conversation = [
+  { role: "system", content: SYSTEM_PROMPT }
+];
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
@@ -53,30 +62,40 @@ function addMessage(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* === Ask Hugging Face === */
+/* ================================
+   HUGGING FACE CHAT REQUEST
+   ================================ */
 async function askHuggingFace() {
-  const messages = conversation.map(c => `${c.role === "user" ? "User" : "Assistant"}: ${c.content}`).join("\n") + "\nAssistant:";
-
   try {
-    const res = await fetch("https://api-inference.huggingface.co/models/mistralai/mistral-mini", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${HF_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ inputs: messages })
-    });
+    const res = await fetch(
+      "https://api-inference.huggingface.co/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${HF_TOKEN}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "HuggingFaceH4/zephyr-7b-beta",
+          messages: conversation,
+          max_tokens: 200,
+          temperature: 0.7
+        })
+      }
+    );
 
     const data = await res.json();
-    if (data?.generated_text) return data.generated_text;
-    if (Array.isArray(data) && data[0]?.generated_text) return data[0].generated_text;
-    return "⚠️ No response";
+    return data?.choices?.[0]?.message?.content || "⚠️ No response.";
+
   } catch (err) {
-    return "⚠️ Network error";
+    console.error(err);
+    return "⚠️ Network error (rate limit or token issue).";
   }
 }
 
-/* === Send button === */
+/* ================================
+   SEND MESSAGE
+   ================================ */
 send.onclick = async () => {
   const text = input.value.trim();
   if (!text) return;

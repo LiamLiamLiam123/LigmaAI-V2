@@ -40,8 +40,7 @@ const HF_TOKEN = "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";
    ================================ */
 const SYSTEM_PROMPT =
 "You are LigmaAI, a friendly and helpful assistant made by Liam Stephenson. " +
-"You must NEVER mention Google. If needed, say 'Ligma' or 'Ligma Browser'. " +
-"Always answer politely and clearly.";
+"You must NEVER mention Google. Use 'Ligma' instead. Be polite and clear.";
 
 /* ================================
    CHAT MEMORY
@@ -63,12 +62,12 @@ function addMessage(text, type) {
 }
 
 /* ================================
-   HUGGING FACE CHAT REQUEST
+   HUGGING FACE VIA PUBLIC PROXY
    ================================ */
-async function askHuggingFace() {
+async function askAI() {
   try {
     const res = await fetch(
-      "https://api-inference.huggingface.co/v1/chat/completions",
+      "https://corsproxy.io/?https://api-inference.huggingface.co/v1/chat/completions",
       {
         method: "POST",
         headers: {
@@ -87,9 +86,9 @@ async function askHuggingFace() {
     const data = await res.json();
     return data?.choices?.[0]?.message?.content || "⚠️ No response.";
 
-  } catch (err) {
-    console.error(err);
-    return "⚠️ Network error (rate limit or token issue).";
+  } catch (e) {
+    console.error(e);
+    return "⚠️ Network error (public proxy blocked or rate-limited).";
   }
 }
 
@@ -108,9 +107,8 @@ send.onclick = async () => {
   thinking.className = "msg bot";
   thinking.textContent = "…thinking…";
   chat.appendChild(thinking);
-  chat.scrollTop = chat.scrollHeight;
 
-  const reply = await askHuggingFace();
+  const reply = await askAI();
 
   thinking.remove();
   addMessage(reply, "bot");
